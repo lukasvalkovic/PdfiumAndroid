@@ -875,7 +875,8 @@ JNI_FUNC(jint, PdfiumCore, nativeTextGetBoundedText)(JNI_ARGS, jlong textPagePtr
                                                               int start_index);
 */
 JNI_FUNC(jlong, PdfiumCore, nativeFindStart)(JNI_ARGS, jlong textPagePtr, jstring findWhat) {
-    return -1;
+    FPDF_TEXTPAGE *textPage = reinterpret_cast<FPDF_TEXTPAGE*>(textPagePtr);
+    return (jlong)FPDFText_FindStart(textPage, reinterpret_cast<FPDF_WIDESTRING>(findWhat), 0, 0);
 }
 
 //FPDF_EXPORT FPDF_BOOL FPDF_CALLCONV FPDFText_FindNext(FPDF_SCHHANDLE handle);
