@@ -888,12 +888,12 @@ JNI_FUNC(jboolean, PdfiumCore, nativeFindNext)(JNI_ARGS, jlong searchHandlePtr) 
 //DLLEXPORT FPDF_BOOL STDCALL FPDFText_FindPrev(FPDF_SCHHANDLE handle);
 JNI_FUNC(jboolean, PdfiumCore, nativeFindPrevious)(JNI_ARGS, jlong searchHandlePtr) {
     FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
-    FPDF_BOOL result = FPDFText_FindPrev(searchHandlePtr);
+    FPDF_BOOL result = FPDFText_FindPrev(searchHandle);
     return (jboolean)result;
 }
 
 //FPDF_EXPORT int FPDF_CALLCONV FPDFText_GetSchResultIndex(FPDF_SCHHANDLE handle);
-JNI_FUNC(jint, PdfiumCore, nativeFindResultIndex(JNI_ARGS, jlong searchHandlePtr) {
+JNI_FUNC(jint, PdfiumCore, nativeFindResultIndex)(JNI_ARGS, jlong searchHandlePtr) {
     FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
     return (jint)FPDFText_GetSchResultIndex(searchHandle);
 }
