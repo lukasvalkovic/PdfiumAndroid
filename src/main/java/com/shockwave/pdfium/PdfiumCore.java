@@ -118,6 +118,12 @@ public class PdfiumCore {
     private native PointF nativeDeviceCoordsToPage(long pagePtr, int startX, int startY, int sizeX,
                                                    int sizeY, int rotate, int deviceX, int deviceY);
 
+    private native long nativeFindStart(long pagePtr, String findWhat);
+    private native boolean nativeFindNext(long searchHandlePtr);
+    private native boolean nativeFindPrevious(long searchHandlePtr);
+    private native int nativeFindResultIndex(long searchHandlePtr);
+    private native int nativeFindCount(long searchHandlePtr);
+    private native void nativeFindClose(long searchHandlePtr);
 
     /* synchronize native methods */
     private static final Object lock = new Object();
@@ -716,6 +722,76 @@ public class PdfiumCore {
                 e.printStackTrace();
             }
             return null;
+        }
+    }
+
+    public void textFindStart(PdfDocument doc, int textPageIndex, String findWhat) {
+        synchronized (lock) {
+            try {
+                doc.mNativeSearchPtr = nativeFindStart(doc.mNativeTextPagesPtr.get(textPageIndex), findWhat);
+            } catch (Exception e) {
+                Log.e(TAG, "Exception throw from native");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public boolean textFindNext(PdfDocument doc) {
+        synchronized (lock) {
+            try {
+                return nativeFindNext(doc.mNativeSearchPtr);
+            } catch (Exception e) {
+                Log.e(TAG, "Exception throw from native");
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    public boolean textFindPrevious(PdfDocument doc) {
+        synchronized (lock) {
+            try {
+                return nativeFindPrevious(doc.mNativeSearchPtr);
+            } catch (Exception e) {
+                Log.e(TAG, "Exception throw from native");
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    public int textCount(PdfDocument doc) {
+        synchronized (lock) {
+            try {
+                return nativeFindCount(doc.mNativeSearchPtr);
+            } catch (Exception e) {
+                Log.e(TAG, "Exception throw from native");
+                e.printStackTrace();
+            }
+        }
+        return -1;
+    }
+
+    public int textResultIndex(PdfDocument doc) {
+        synchronized (lock) {
+            try {
+                return nativeFindResultIndex(doc.mNativeSearchPtr);
+            } catch (Exception e) {
+                Log.e(TAG, "Exception throw from native");
+                e.printStackTrace();
+            }
+        }
+        return -1;
+    }
+
+    public void textFindClose(PdfDocument doc) {
+        synchronized (lock) {
+            try {
+                nativeFindClose(doc.mNativeSearchPtr);
+            } catch (Exception e) {
+                Log.e(TAG, "Exception throw from native");
+                e.printStackTrace();
+            }
         }
     }
 }

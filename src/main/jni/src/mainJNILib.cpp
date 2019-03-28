@@ -869,4 +869,45 @@ JNI_FUNC(jint, PdfiumCore, nativeTextGetBoundedText)(JNI_ARGS, jlong textPagePtr
     return output;
 }
 
+/*FPDF_EXPORT FPDF_SCHHANDLE FPDF_CALLCONV FPDFText_FindStart(FPDF_TEXTPAGE text_page,
+                                                              FPDF_WIDESTRING findwhat,
+                                                              unsigned long flags,
+                                                              int start_index);
+*/
+JNI_FUNC(jlong, PdfiumCore, nativeFindStart)(JNI_ARGS, jlong textPagePtr, jstring findWhat) {
+    return -1;
+}
+
+//FPDF_EXPORT FPDF_BOOL FPDF_CALLCONV FPDFText_FindNext(FPDF_SCHHANDLE handle);
+JNI_FUNC(jboolean, PdfiumCore, nativeFindNext)(JNI_ARGS, jlong searchHandlePtr) {
+    FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
+    FPDF_BOOL result = FPDFText_FindNext(searchHandle);
+    return (jboolean)result;
+}
+
+//DLLEXPORT FPDF_BOOL STDCALL FPDFText_FindPrev(FPDF_SCHHANDLE handle);
+JNI_FUNC(jboolean, PdfiumCore, nativeFindPrevious)(JNI_ARGS, jlong searchHandlePtr) {
+    FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
+    FPDF_BOOL result = FPDFText_FindPrev(searchHandlePtr);
+    return (jboolean)result;
+}
+
+//FPDF_EXPORT int FPDF_CALLCONV FPDFText_GetSchResultIndex(FPDF_SCHHANDLE handle);
+JNI_FUNC(jint, PdfiumCore, nativeFindResultIndex(JNI_ARGS, jlong searchHandlePtr) {
+    FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
+    return (jint)FPDFText_GetSchResultIndex(searchHandle);
+}
+
+//FPDF_EXPORT int FPDF_CALLCONV FPDFText_GetSchCount(FPDF_SCHHANDLE handle);
+JNI_FUNC(jint, PdfiumCore, nativeFindCount)(JNI_ARGS, jlong searchHandlePtr) {
+    FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
+    return (jint)FPDFText_GetSchCount(searchHandle);
+}
+
+//FPDF_EXPORT void FPDF_CALLCONV FPDFText_FindClose(FPDF_SCHHANDLE handle);
+JNI_FUNC(void, PdfiumCore, nativeFindClose)(JNI_ARGS, jlong searchHandlePtr) {
+    FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
+    FPDFText_FindClose(searchHandle);
+}
+
 }//extern C
