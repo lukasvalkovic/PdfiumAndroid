@@ -118,5 +118,9 @@ public class PdfDocument {
         return mNativeTextPagesPtr.containsKey(index);
     }
 
-    /*package*/ long mNativeSearchPtr;
+    /*package*/ final Map<Integer, Long> mNativeSearchHandlePtr = new ArrayMap<>();
+
+    public boolean hasSearchHandle(int index) {
+        return mNativeSearchHandlePtr.containsKey(index);
+    }
 }

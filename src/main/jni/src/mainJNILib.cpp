@@ -705,6 +705,28 @@ JNI_FUNC(jobject, PdfiumCore, nativeDeviceCoordsToPage)(JNI_ARGS, jlong pagePtr,
 //////////////////////////////////////////
 //Begin FPDF_TEXTPAGE section
 
+unsigned short *convertWideString(JNIEnv *env, jstring query) {
+
+    std::wstring value;
+    const jchar *raw = env->GetStringChars(query, 0);
+    jsize len = env->GetStringLength(query);
+    value.assign(raw, raw + len);
+    env->ReleaseStringChars(query, raw);
+
+    size_t length = sizeof(uint16_t) * (value.length() + 1);
+    unsigned short *result = static_cast<unsigned short *>(malloc(length));
+    char *ptr = reinterpret_cast<char *>(result);
+    size_t i = 0;
+    for (wchar_t w : value) {
+        ptr[i++] = w & 0xff;
+        ptr[i++] = (w >> 8) & 0xff;
+    }
+    ptr[i++] = 0;
+    ptr[i] = 0;
+
+    return result;
+}
+
 static jlong loadTextPageInternal(JNIEnv *env, DocumentFile *doc, jlong pagePtr){
     try{
         if(doc == NULL) throw "Get page document null";
@@ -874,35 +896,41 @@ JNI_FUNC(jint, PdfiumCore, nativeTextGetBoundedText)(JNI_ARGS, jlong textPagePtr
                                                               unsigned long flags,
                                                               int start_index);
 */
-JNI_FUNC(jlong, PdfiumCore, nativeFindStart)(JNI_ARGS, jlong textPagePtr, jstring findWhat) {
+JNI_FUNC(jlong, PdfiumCore, nativeFindStart)(JNI_ARGS, jlong textPagePtr, jstring findWhat, jboolean matchCase, jboolean matchWholeWord) {
     FPDF_TEXTPAGE *textPage = reinterpret_cast<FPDF_TEXTPAGE*>(textPagePtr);
-    return (jlong)FPDFText_FindStart(textPage, reinterpret_cast<FPDF_WIDESTRING>(findWhat), 0, 0);
+    unsigned short *findWhatPtr = convertWideString(env, findWhat);
+    unsigned long flags = 0;
+    if (matchCase) {
+        flags = FPDF_MATCHCASE;
+    }
+    if (matchWholeWord) {
+        flags = flags | FPDF_MATCHWHOLEWORD;
+    }
+    return reinterpret_cast<jlong>(FPDFText_FindStart(textPage, findWhatPtr, flags, 0));
 }
 
 //FPDF_EXPORT FPDF_BOOL FPDF_CALLCONV FPDFText_FindNext(FPDF_SCHHANDLE handle);
 JNI_FUNC(jboolean, PdfiumCore, nativeFindNext)(JNI_ARGS, jlong searchHandlePtr) {
     FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
-    FPDF_BOOL result = FPDFText_FindNext(searchHandle);
-    return (jboolean)result;
+    return FPDFText_FindNext(searchHandle) ? JNI_TRUE : JNI_FALSE;
 }
 
 //DLLEXPORT FPDF_BOOL STDCALL FPDFText_FindPrev(FPDF_SCHHANDLE handle);
 JNI_FUNC(jboolean, PdfiumCore, nativeFindPrevious)(JNI_ARGS, jlong searchHandlePtr) {
     FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
-    FPDF_BOOL result = FPDFText_FindPrev(searchHandle);
-    return (jboolean)result;
+    return FPDFText_FindPrev(searchHandle) ? JNI_TRUE : JNI_FALSE;
 }
 
 //FPDF_EXPORT int FPDF_CALLCONV FPDFText_GetSchResultIndex(FPDF_SCHHANDLE handle);
 JNI_FUNC(jint, PdfiumCore, nativeFindResultIndex)(JNI_ARGS, jlong searchHandlePtr) {
     FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
-    return (jint)FPDFText_GetSchResultIndex(searchHandle);
+    return FPDFText_GetSchResultIndex(searchHandle);
 }
 
 //FPDF_EXPORT int FPDF_CALLCONV FPDFText_GetSchCount(FPDF_SCHHANDLE handle);
 JNI_FUNC(jint, PdfiumCore, nativeFindCount)(JNI_ARGS, jlong searchHandlePtr) {
     FPDF_SCHHANDLE *searchHandle = reinterpret_cast<FPDF_SCHHANDLE*>(searchHandlePtr);
-    return (jint)FPDFText_GetSchCount(searchHandle);
+    return FPDFText_GetSchCount(searchHandle);
 }
 
 //FPDF_EXPORT void FPDF_CALLCONV FPDFText_FindClose(FPDF_SCHHANDLE handle);

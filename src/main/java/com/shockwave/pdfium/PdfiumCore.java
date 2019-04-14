@@ -9,6 +9,7 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Surface;
 
+import com.shockwave.pdfium.search.SearchHandle;
 import com.shockwave.pdfium.util.Size;
 
 import java.io.FileDescriptor;
@@ -118,7 +119,7 @@ public class PdfiumCore {
     private native PointF nativeDeviceCoordsToPage(long pagePtr, int startX, int startY, int sizeX,
                                                    int sizeY, int rotate, int deviceX, int deviceY);
 
-    private native long nativeFindStart(long pagePtr, String findWhat);
+    private native long nativeFindStart(long pagePtr, String findWhat, boolean matchCase, boolean matchWholeWord);
     private native boolean nativeFindNext(long searchHandlePtr);
     private native boolean nativeFindPrevious(long searchHandlePtr);
     private native int nativeFindResultIndex(long searchHandlePtr);
@@ -725,73 +726,55 @@ public class PdfiumCore {
         }
     }
 
-    public void textFindStart(PdfDocument doc, int textPageIndex, String findWhat) {
-        synchronized (lock) {
-            try {
-                doc.mNativeSearchPtr = nativeFindStart(doc.mNativeTextPagesPtr.get(textPageIndex), findWhat);
-            } catch (Exception e) {
-                Log.e(TAG, "Exception throw from native");
-                e.printStackTrace();
-            }
-        }
-    }
+    public SearchHandle newSearch(PdfDocument doc, int textPageIndex, String findWhat, boolean matchCase, boolean matchWholeWord) {
+        return new SearchHandle(doc, textPageIndex, findWhat, matchCase, matchWholeWord) {
 
-    public boolean textFindNext(PdfDocument doc) {
-        synchronized (lock) {
-            try {
-                return nativeFindNext(doc.mNativeSearchPtr);
-            } catch (Exception e) {
-                Log.e(TAG, "Exception throw from native");
-                e.printStackTrace();
-            }
-        }
-        return false;
-    }
+            Long searchHandlePtr;
 
-    public boolean textFindPrevious(PdfDocument doc) {
-        synchronized (lock) {
-            try {
-                return nativeFindPrevious(doc.mNativeSearchPtr);
-            } catch (Exception e) {
-                Log.e(TAG, "Exception throw from native");
-                e.printStackTrace();
+            @Override
+            public void prepareSearch() {
+                long textPagePtr = openTextPage(document, pageIndex);
+                if (document.hasSearchHandle(pageIndex)) {
+                    long searchPtr = document.mNativeSearchHandlePtr.get(pageIndex);
+                    nativeFindClose(searchPtr);
+                }
+                searchHandlePtr = nativeFindStart(textPagePtr, findWhat, matchCase, matchWholeWord);
             }
-        }
-        return false;
-    }
 
-    public int textCount(PdfDocument doc) {
-        synchronized (lock) {
-            try {
-                return nativeFindCount(doc.mNativeSearchPtr);
-            } catch (Exception e) {
-                Log.e(TAG, "Exception throw from native");
-                e.printStackTrace();
+            @Override
+            public RectF searchNext() {
+                boolean hasNext = nativeFindNext(searchHandlePtr);
+                if (hasNext) {
+                    int index = nativeFindResultIndex(searchHandlePtr);
+                    if (index > -1) {
+                        return textPageGetCharBox(document, pageIndex, index);
+                    }
+                }
+                return null;
             }
-        }
-        return -1;
-    }
 
-    public int textResultIndex(PdfDocument doc) {
-        synchronized (lock) {
-            try {
-                return nativeFindResultIndex(doc.mNativeSearchPtr);
-            } catch (Exception e) {
-                Log.e(TAG, "Exception throw from native");
-                e.printStackTrace();
+            @Override
+            public RectF searchPrev() {
+                boolean hasPrev = nativeFindPrevious(searchHandlePtr);
+                if (hasPrev) {
+                    int index = nativeFindResultIndex(searchHandlePtr);
+                    if (index > -1) {
+                        return textPageGetCharBox(document, pageIndex, index);
+                    }
+                }
+                return null;
             }
-        }
-        return -1;
-    }
 
-    public void textFindClose(PdfDocument doc) {
-        synchronized (lock) {
-            try {
-                nativeFindClose(doc.mNativeSearchPtr);
-            } catch (Exception e) {
-                Log.e(TAG, "Exception throw from native");
-                e.printStackTrace();
+            @Override
+            public void stopSearch() {
+                nativeFindClose(searchHandlePtr);
+                document.mNativeSearchHandlePtr.remove(pageIndex);
             }
-        }
+
+            @Override
+            public int countResult() {
+                return nativeFindCount(searchHandlePtr);
+            }
+        };
     }
 }
